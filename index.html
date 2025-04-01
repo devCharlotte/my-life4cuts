@@ -12,7 +12,9 @@
       font-style: normal;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       font-family: 'HakgyoansimNadeuriTTF-B', sans-serif;
@@ -22,41 +24,48 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
+      padding: 20px;
     }
 
     .wrapper {
       display: flex;
+      flex-wrap: wrap;
       gap: 40px;
       background: #fff;
       padding: 20px;
       border-radius: 15px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-      max-width: 960px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      max-width: 1200px;
       width: 100%;
+      justify-content: center;
     }
 
     .left-panel, .right-panel {
       display: flex;
       flex-direction: column;
       align-items: center;
-      flex: 1 1 400px;
+      flex: 1 1 360px;
+      min-width: 300px;
     }
 
     video {
-      width: 360px;
+      width: 100%;
+      max-width: 400px;
       aspect-ratio: 3 / 4;
       border-radius: 10px;
       background: #000;
     }
 
     canvas {
-      width: 360px;
+      width: 100%;
+      max-width: 400px;
       border-radius: 10px;
       background: #eee;
     }
 
     .color-picker {
       margin: 15px 0;
+      text-align: center;
     }
 
     .color-option {
@@ -132,13 +141,15 @@
     const ctx = canvas.getContext("2d");
     const colorOptions = document.querySelectorAll(".color-option");
 
+    const titleText = "Life 4 Cuts by JoonHee";
     let selectedColor = "#FFADAD";
     let photoIndex = 0;
     const maxPhotos = 4;
 
     let frameWidth = canvas.width;
-    let frameHeight = 0;  // 비디오 비율 기준으로 계산
+    let frameHeight = 0;
     let canvasHeight = 0;
+    let currentDate = "";
 
     function getCurrentDate() {
       const d = new Date();
@@ -150,7 +161,7 @@
         colorOptions.forEach(o => o.classList.remove("selected"));
         opt.classList.add("selected");
         selectedColor = opt.dataset.color;
-        if (frameHeight > 0) drawFrame(); // 이미 카메라 시작된 후면 다시 그리기
+        if (frameHeight > 0) drawFrame();
       });
     });
 
@@ -162,7 +173,8 @@
         video.onloadedmetadata = () => {
           const aspectRatio = video.videoHeight / video.videoWidth;
           frameHeight = frameWidth * aspectRatio;
-          canvas.height = frameHeight * maxPhotos + 100;  // 여백 포함
+          canvas.height = frameHeight * maxPhotos + 100;
+          currentDate = getCurrentDate();
           drawFrame();
         };
       } catch (err) {
@@ -182,8 +194,8 @@
       ctx.fillStyle = selectedColor;
       ctx.font = "bold 20px HakgyoansimNadeuriTTF-B";
       ctx.textAlign = "center";
-      ctx.fillText("Life 4 Cuts by JoonHee", frameWidth / 2, 30);
-      ctx.fillText(getCurrentDate(), frameWidth / 2, canvas.height - 20);
+      ctx.fillText(titleText, frameWidth / 2, 30);
+      ctx.fillText(currentDate, frameWidth / 2, canvas.height - 20);
     }
 
     function takePhoto() {
@@ -209,7 +221,7 @@
 
       const link = document.createElement("a");
       link.href = canvas.toDataURL("image/png");
-      link.download = "life4cuts.png";
+      link.download = `${titleText} (${currentDate}).png`;
       link.click();
     }
 
