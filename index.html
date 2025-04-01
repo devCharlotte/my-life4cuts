@@ -12,69 +12,51 @@
       font-style: normal;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
-      font-family: 'HakgyoansimNadeuriTTF-B', Arial, sans-serif;
+      font-family: 'HakgyoansimNadeuriTTF-B', sans-serif;
       margin: 0;
-      padding: 0;
       background: linear-gradient(120deg, #ff9a9e, #fad0c4);
-      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
+      height: 100vh;
     }
 
     .wrapper {
       display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
+      gap: 40px;
       background: #fff;
       padding: 20px;
       border-radius: 15px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-      max-width: 1000px;
-      width: 95vw;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      max-width: 960px;
+      width: 100%;
     }
 
-    .left-panel {
+    .left-panel, .right-panel {
       display: flex;
       flex-direction: column;
       align-items: center;
-      flex: 1 1 360px;
-      min-width: 300px;
+      flex: 1 1 400px;
     }
 
     video {
-      width: 100%;
+      width: 360px;
       aspect-ratio: 3 / 4;
+      border-radius: 10px;
       background: #000;
+    }
+
+    canvas {
+      width: 360px;
       border-radius: 10px;
-      max-width: 400px;
+      background: #eee;
     }
 
-    .controls, .color-picker {
-      margin-top: 15px;
-      text-align: center;
-    }
-
-    button {
-      font-family: inherit;
-      font-size: 1rem;
-      padding: 10px 20px;
-      margin: 5px;
-      background-color: #ff79c6;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    button:hover {
-      background-color: #ff47b2;
+    .color-picker {
+      margin: 15px 0;
     }
 
     .color-option {
@@ -91,18 +73,30 @@
       border: 3px solid #000;
     }
 
-    .right-panel {
-      flex: 1 1 360px;
-      min-width: 300px;
+    .controls {
+      margin-top: 10px;
     }
 
-    #canvas {
-      width: 100%;
-      aspect-ratio: 3 / 1;
-      max-width: 400px;
-      border-radius: 20px;
-      display: block;
-      background: #eee;
+    button {
+      font-family: inherit;
+      font-size: 1rem;
+      padding: 10px 20px;
+      margin: 5px;
+      background-color: #ff79c6;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #ff47b2;
+    }
+
+    p {
+      font-size: 0.9rem;
+      margin: 0.5em 0;
+      text-align: center;
     }
   </style>
 </head>
@@ -110,26 +104,28 @@
   <div class="wrapper">
     <div class="left-panel">
       <video id="video" autoplay playsinline></video>
-      <div class="color-picker">
-        <p>Choose a frame color:</p>
-        <div id="colors">
-          <span class="color-option" style="background: #FFADAD;" data-color="#FFADAD"></span>
-          <span class="color-option" style="background: #FFD6A5;" data-color="#FFD6A5"></span>
-          <span class="color-option" style="background: #FDFFB6;" data-color="#FDFFB6"></span>
-          <span class="color-option" style="background: #CAFFBF;" data-color="#CAFFBF"></span>
-          <span class="color-option" style="background: #9BF6FF;" data-color="#9BF6FF"></span>
-          <span class="color-option" style="background: #A0C4FF;" data-color="#A0C4FF"></span>
-        </div>
+
+      <div class="color-picker" id="colors">
+        <p>Choose a frame color before taking photos:</p>
+        <span class="color-option" style="background:#FFADAD" data-color="#FFADAD"></span>
+        <span class="color-option" style="background:#FFD6A5" data-color="#FFD6A5"></span>
+        <span class="color-option" style="background:#CAFFBF" data-color="#CAFFBF"></span>
+        <span class="color-option" style="background:#9BF6FF" data-color="#9BF6FF"></span>
+        <span class="color-option" style="background:#A0C4FF" data-color="#A0C4FF"></span>
+        <span class="color-option" style="background:#BDB2FF" data-color="#BDB2FF"></span>
       </div>
+
       <div class="controls">
         <button onclick="takePhoto()">Take Photo</button>
         <button onclick="downloadPhoto()">Download</button>
       </div>
     </div>
+
     <div class="right-panel">
-      <canvas id="canvas" width="360" height="1440"></canvas>
+      <canvas id="canvas" width="360"></canvas>
     </div>
   </div>
+
   <script>
     const video = document.getElementById("video");
     const canvas = document.getElementById("canvas");
@@ -139,68 +135,69 @@
     let selectedColor = "#FFADAD";
     let photoIndex = 0;
     const maxPhotos = 4;
-    const frameWidth = canvas.width;
-    const frameHeight = canvas.height / maxPhotos;
+
+    let frameWidth = canvas.width;
+    let frameHeight = 0;  // 비디오 비율 기준으로 계산
+    let canvasHeight = 0;
 
     function getCurrentDate() {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
+      const d = new Date();
+      return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
     }
+
+    colorOptions.forEach(opt => {
+      opt.addEventListener("click", () => {
+        colorOptions.forEach(o => o.classList.remove("selected"));
+        opt.classList.add("selected");
+        selectedColor = opt.dataset.color;
+        if (frameHeight > 0) drawFrame(); // 이미 카메라 시작된 후면 다시 그리기
+      });
+    });
 
     async function startCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
         video.srcObject = stream;
+
+        video.onloadedmetadata = () => {
+          const aspectRatio = video.videoHeight / video.videoWidth;
+          frameHeight = frameWidth * aspectRatio;
+          canvas.height = frameHeight * maxPhotos + 100;  // 여백 포함
+          drawFrame();
+        };
       } catch (err) {
-        alert("Camera access is denied. Please allow access to use this feature.");
+        alert("Camera access denied.");
       }
     }
-
-    colorOptions.forEach(option => {
-      option.addEventListener("click", () => {
-        colorOptions.forEach(opt => opt.classList.remove("selected"));
-        option.classList.add("selected");
-        selectedColor = option.getAttribute("data-color");
-        drawFrame();
-      });
-    });
 
     function drawFrame() {
       ctx.fillStyle = selectedColor;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.clearRect(10, 50, canvas.width - 20, canvas.height - 100);
 
-      ctx.strokeStyle = selectedColor;
-      ctx.lineWidth = 20;
-      ctx.strokeRect(10, 50, canvas.width - 20, canvas.height - 100);
+      ctx.fillStyle = "#fff";
+      for (let i = 0; i < maxPhotos; i++) {
+        ctx.fillRect(10, 50 + i * frameHeight, frameWidth - 20, frameHeight - 10);
+      }
 
-      ctx.fillStyle = "#000";
-      ctx.font = "bold 24px HakgyoansimNadeuriTTF-B";
+      ctx.fillStyle = selectedColor;
+      ctx.font = "bold 20px HakgyoansimNadeuriTTF-B";
       ctx.textAlign = "center";
-      ctx.fillText("Life 4 Cuts by JoonHee", canvas.width / 2, 30);
-      ctx.fillText(getCurrentDate(), canvas.width / 2, canvas.height - 20);
+      ctx.fillText("Life 4 Cuts by JoonHee", frameWidth / 2, 30);
+      ctx.fillText(getCurrentDate(), frameWidth / 2, canvas.height - 20);
     }
 
     function takePhoto() {
       if (photoIndex >= maxPhotos) {
-        alert("All 4 frames are already filled.");
+        alert("All 4 photos taken.");
         return;
       }
 
-      const sx = 0;
-      const sy = 0;
-      const sWidth = video.videoWidth;
-      const sHeight = video.videoHeight;
       const dx = 10;
       const dy = 50 + photoIndex * frameHeight;
-      const dWidth = canvas.width - 20;
-      const dHeight = frameHeight - 10;
+      const dw = frameWidth - 20;
+      const dh = frameHeight - 10;
 
-      ctx.drawImage(video, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
-
+      ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, dx, dy, dw, dh);
       photoIndex++;
     }
 
@@ -209,6 +206,7 @@
         alert("Please complete all 4 photos before downloading.");
         return;
       }
+
       const link = document.createElement("a");
       link.href = canvas.toDataURL("image/png");
       link.download = "life4cuts.png";
@@ -217,7 +215,6 @@
 
     window.addEventListener("load", () => {
       startCamera();
-      drawFrame();
     });
   </script>
 </body>
