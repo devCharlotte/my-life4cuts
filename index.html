@@ -52,7 +52,7 @@
       aspect-ratio: 3 / 4;
       border-radius: 10px;
       background: #000;
-      transform: scaleX(-1,1); 
+      transform: scaleX(-1); 
     }
 
     canvas {
@@ -194,7 +194,6 @@
       ctx.textAlign = "center";
 
       ctx.fillText(titleText, frameWidth / 2, 40);
-
       ctx.fillText(currentDate, frameWidth / 2, canvas.height - 30);
     }
 
@@ -209,7 +208,12 @@
       const dw = frameWidth - 20;
       const dh = frameHeight - 10;
 
-      ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, dx, dy, dw, dh);
+      ctx.save();
+      ctx.translate(dx + dw, 0);   
+      ctx.scale(-1, 1);           
+      ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, 0, dy, dw, dh);
+      ctx.restore();
+
       photoIndex++;
     }
 
