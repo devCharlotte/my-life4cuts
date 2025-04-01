@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Life 4 Cuts by JoonHee</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    @font-face {
+      font-family: 'HakgyoansimNadeuriTTF-B';
+      src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-5@1.0/HakgyoansimNadeuriTTF-B.woff2') format('woff2');
+      font-weight: 700;
+      font-style: normal;
+    }
+
+    body {
+      font-family: 'HakgyoansimNadeuriTTF-B', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(120deg, #ff9a9e, #fad0c4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      max-width: 420px;
+      width: 90%;
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 1rem;
+      color: #555;
+      margin-bottom: 5px;
+    }
+
+    video {
+      width: 100%;
+      max-width: 360px;
+      border-radius: 10px;
+      margin: 10px 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      max-width: 360px;
+      margin: 15px auto;
+      border-radius: 10px;
+      background-color: #eee;
+    }
+
+    .controls {
+      margin-top: 10px;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 1rem;
+      padding: 10px 20px;
+      margin: 5px;
+      background-color: #ff79c6;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #ff47b2;
+    }
+
+    .color-picker {
+      margin: 15px 0;
+    }
+
+    .color-option {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: inline-block;
+      margin: 5px;
+      cursor: pointer;
+      border: 2px solid #ccc;
+    }
+
+    .color-option.selected {
+      border: 3px solid #000;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Life 4 Cuts by JoonHee</h1>
+    <p>Camera access is required to take photos.</p>
+    <p><strong>Instructions:</strong> Please choose a frame color before taking each photo.</p>
+
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas" width="360" height="1920"></canvas>
+
+    <div class="color-picker">
+      <div id="colors">
+        <span class="color-option" style="background: #FFADAD;" data-color="#FFADAD"></span>
+        <span class="color-option" style="background: #FFD6A5;" data-color="#FFD6A5"></span>
+        <span class="color-option" style="background: #FDFFB6;" data-color="#FDFFB6"></span>
+        <span class="color-option" style="background: #CAFFBF;" data-color="#CAFFBF"></span>
+        <span class="color-option" style="background: #9BF6FF;" data-color="#9BF6FF"></span>
+        <span class="color-option" style="background: #A0C4FF;" data-color="#A0C4FF"></span>
+        <span class="color-option" style="background: #BDB2FF;" data-color="#BDB2FF"></span>
+        <span class="color-option" style="background: #FFC6FF;" data-color="#FFC6FF"></span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button onclick="takePhoto()">Take Photo</button>
+      <button onclick="downloadPhoto()">Download</button>
+    </div>
+  </div>
+
+  <script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const colorOptions = document.querySelectorAll(".color-option");
+
+    let selectedColor = "#FFADAD";
+    let photoIndex = 0;
+    const maxPhotos = 4;
+    const frameWidth = canvas.width;
+    const frameHeight = canvas.height / maxPhotos;
+
+    function getCurrentDate() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+      } catch (err) {
+        alert("Camera access is denied. Please allow access to use this feature.");
+      }
+    }
+
+    colorOptions.forEach(option => {
+      option.addEventListener("click", () => {
+        colorOptions.forEach(opt => opt.classList.remove("selected"));
+        option.classList.add("selected");
+        selectedColor = option.getAttribute("data-color");
+      });
+    });
+
+    function takePhoto() {
+      if (photoIndex >= maxPhotos) {
+        alert("All 4 frames are already filled.");
+        return;
+      }
+
+      ctx.fillStyle = selectedColor;
+      ctx.fillRect(0, photoIndex * frameHeight, frameWidth, frameHeight);
+
+      ctx.drawImage(video, 0, photoIndex * frameHeight, frameWidth, frameHeight);
+
+      ctx.fillStyle = selectedColor;
+      ctx.font = "bold 20px HakgyoansimNadeuriTTF-B";
+      ctx.textAlign = "center";
+      ctx.fillText("Life 4 Cuts by JoonHee", frameWidth / 2, photoIndex * frameHeight + 30);
+      ctx.fillText(getCurrentDate(), frameWidth / 2, (photoIndex + 1) * frameHeight - 20);
+
+      photoIndex++;
+    }
+
+    function downloadPhoto() {
+      if (photoIndex < maxPhotos) {
+        alert("Please complete all 4 photos before downloading.");
+        return;
+      }
+      const link = document.createElement("a");
+      link.href = canvas.toDataURL("image/png");
+      link.download = "life4cuts.png";
+      link.click();
+    }
+
+    window.addEventListener("load", startCamera);
+  </script>
+</body>
+</html>
