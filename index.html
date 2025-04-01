@@ -17,52 +17,37 @@
       margin: 0;
       padding: 0;
       background: linear-gradient(120deg, #ff9a9e, #fad0c4);
+      height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
     }
 
-    .container {
+    .wrapper {
+      display: flex;
+      gap: 20px;
       background: #fff;
-      padding: 30px;
+      padding: 20px;
       border-radius: 15px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-      text-align: center;
-      max-width: 420px;
-      width: 90%;
     }
 
-    h1 {
-      font-size: 2rem;
-      color: #333;
-      margin-bottom: 10px;
-    }
-
-    p {
-      font-size: 1rem;
-      color: #555;
-      margin-bottom: 5px;
+    .left-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     video {
-      width: 100%;
-      max-width: 360px;
+      width: 360px;
+      height: 480px;
+      background: #000;
       border-radius: 10px;
-      margin: 10px 0;
     }
 
-    canvas {
-      display: block;
-      width: 100%;
-      max-width: 360px;
-      margin: 15px auto;
-      border-radius: 10px;
-      background-color: #eee;
-    }
-
-    .controls {
-      margin-top: 10px;
+    .controls, .color-picker {
+      margin-top: 15px;
+      text-align: center;
     }
 
     button {
@@ -82,10 +67,6 @@
       background-color: #ff47b2;
     }
 
-    .color-picker {
-      margin: 15px 0;
-    }
-
     .color-option {
       width: 30px;
       height: 30px;
@@ -99,33 +80,45 @@
     .color-option.selected {
       border: 3px solid #000;
     }
+
+    .right-panel {
+      position: relative;
+    }
+
+    #canvas {
+      width: 360px;
+      height: 1500px;
+      background: #eee;
+      border-radius: 20px;
+      display: block;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Life 4 Cuts by JoonHee</h1>
-    <p>Camera access is required to take photos.</p>
-    <p><strong>Instructions:</strong> Please choose a frame color before taking each photo.</p>
+  <div class="wrapper">
+    <div class="left-panel">
+      <video id="video" autoplay playsinline></video>
 
-    <video id="video" autoplay playsinline></video>
-    <canvas id="canvas" width="360" height="1920"></canvas>
+      <div class="color-picker">
+        <p>Choose a frame color:</p>
+        <div id="colors">
+          <span class="color-option" style="background: #FFADAD;" data-color="#FFADAD"></span>
+          <span class="color-option" style="background: #FFD6A5;" data-color="#FFD6A5"></span>
+          <span class="color-option" style="background: #FDFFB6;" data-color="#FDFFB6"></span>
+          <span class="color-option" style="background: #CAFFBF;" data-color="#CAFFBF"></span>
+          <span class="color-option" style="background: #9BF6FF;" data-color="#9BF6FF"></span>
+          <span class="color-option" style="background: #A0C4FF;" data-color="#A0C4FF"></span>
+        </div>
+      </div>
 
-    <div class="color-picker">
-      <div id="colors">
-        <span class="color-option" style="background: #FFADAD;" data-color="#FFADAD"></span>
-        <span class="color-option" style="background: #FFD6A5;" data-color="#FFD6A5"></span>
-        <span class="color-option" style="background: #FDFFB6;" data-color="#FDFFB6"></span>
-        <span class="color-option" style="background: #CAFFBF;" data-color="#CAFFBF"></span>
-        <span class="color-option" style="background: #9BF6FF;" data-color="#9BF6FF"></span>
-        <span class="color-option" style="background: #A0C4FF;" data-color="#A0C4FF"></span>
-        <span class="color-option" style="background: #BDB2FF;" data-color="#BDB2FF"></span>
-        <span class="color-option" style="background: #FFC6FF;" data-color="#FFC6FF"></span>
+      <div class="controls">
+        <button onclick="takePhoto()">Take Photo</button>
+        <button onclick="downloadPhoto()">Download</button>
       </div>
     </div>
 
-    <div class="controls">
-      <button onclick="takePhoto()">Take Photo</button>
-      <button onclick="downloadPhoto()">Download</button>
+    <div class="right-panel">
+      <canvas id="canvas" width="360" height="1500"></canvas>
     </div>
   </div>
 
@@ -151,7 +144,7 @@
 
     async function startCamera() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
         video.srcObject = stream;
       } catch (err) {
         alert("Camera access is denied. Please allow access to use this feature.");
@@ -163,8 +156,19 @@
         colorOptions.forEach(opt => opt.classList.remove("selected"));
         option.classList.add("selected");
         selectedColor = option.getAttribute("data-color");
+        drawFrame();
       });
     });
+
+    function drawFrame() {
+      ctx.fillStyle = selectedColor;
+      ctx.fillRect(0, 0, frameWidth, canvas.height);
+      ctx.fillStyle = "#000";
+      ctx.font = "bold 24px HakgyoansimNadeuriTTF-B";
+      ctx.textAlign = "center";
+      ctx.fillText("Life 4 Cuts by JoonHee", frameWidth / 2, 40);
+      ctx.fillText(getCurrentDate(), frameWidth / 2, canvas.height - 20);
+    }
 
     function takePhoto() {
       if (photoIndex >= maxPhotos) {
@@ -172,17 +176,14 @@
         return;
       }
 
-      ctx.fillStyle = selectedColor;
-      ctx.fillRect(0, photoIndex * frameHeight, frameWidth, frameHeight);
+      const tempCanvas = document.createElement("canvas");
+      tempCanvas.width = frameWidth;
+      tempCanvas.height = frameHeight;
+      const tempCtx = tempCanvas.getContext("2d");
+      tempCtx.drawImage(video, 0, 0, frameWidth, frameHeight);
+      const image = tempCanvas;
 
-      ctx.drawImage(video, 0, photoIndex * frameHeight, frameWidth, frameHeight);
-
-      ctx.fillStyle = selectedColor;
-      ctx.font = "bold 20px HakgyoansimNadeuriTTF-B";
-      ctx.textAlign = "center";
-      ctx.fillText("Life 4 Cuts by JoonHee", frameWidth / 2, photoIndex * frameHeight + 30);
-      ctx.fillText(getCurrentDate(), frameWidth / 2, (photoIndex + 1) * frameHeight - 20);
-
+      ctx.drawImage(image, 0, 50 + photoIndex * frameHeight, frameWidth, frameHeight - 20);
       photoIndex++;
     }
 
@@ -197,7 +198,10 @@
       link.click();
     }
 
-    window.addEventListener("load", startCamera);
+    window.addEventListener("load", () => {
+      startCamera();
+      drawFrame();
+    });
   </script>
 </body>
 </html>
