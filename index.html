@@ -12,6 +12,10 @@
       font-style: normal;
     }
 
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: 'HakgyoansimNadeuriTTF-B', Arial, sans-serif;
       margin: 0;
@@ -25,24 +29,30 @@
 
     .wrapper {
       display: flex;
+      flex-wrap: wrap;
       gap: 20px;
       background: #fff;
       padding: 20px;
       border-radius: 15px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      max-width: 1000px;
+      width: 95vw;
     }
 
     .left-panel {
       display: flex;
       flex-direction: column;
       align-items: center;
+      flex: 1 1 360px;
+      min-width: 300px;
     }
 
     video {
-      width: 360px;
-      height: 480px;
+      width: 100%;
+      aspect-ratio: 3 / 4;
       background: #000;
       border-radius: 10px;
+      max-width: 400px;
     }
 
     .controls, .color-picker {
@@ -82,15 +92,17 @@
     }
 
     .right-panel {
-      position: relative;
+      flex: 1 1 360px;
+      min-width: 300px;
     }
 
     #canvas {
-      width: 360px;
-      height: 1500px;
-      background: #eee;
+      width: 100%;
+      aspect-ratio: 3 / 1;
+      max-width: 400px;
       border-radius: 20px;
       display: block;
+      background: #eee;
     }
   </style>
 </head>
@@ -98,7 +110,6 @@
   <div class="wrapper">
     <div class="left-panel">
       <video id="video" autoplay playsinline></video>
-
       <div class="color-picker">
         <p>Choose a frame color:</p>
         <div id="colors">
@@ -110,18 +121,15 @@
           <span class="color-option" style="background: #A0C4FF;" data-color="#A0C4FF"></span>
         </div>
       </div>
-
       <div class="controls">
         <button onclick="takePhoto()">Take Photo</button>
         <button onclick="downloadPhoto()">Download</button>
       </div>
     </div>
-
     <div class="right-panel">
-      <canvas id="canvas" width="360" height="1500"></canvas>
+      <canvas id="canvas" width="360" height="1440"></canvas>
     </div>
   </div>
-
   <script>
     const video = document.getElementById("video");
     const canvas = document.getElementById("canvas");
@@ -162,12 +170,18 @@
 
     function drawFrame() {
       ctx.fillStyle = selectedColor;
-      ctx.fillRect(0, 0, frameWidth, canvas.height);
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(10, 50, canvas.width - 20, canvas.height - 100);
+
+      ctx.strokeStyle = selectedColor;
+      ctx.lineWidth = 20;
+      ctx.strokeRect(10, 50, canvas.width - 20, canvas.height - 100);
+
       ctx.fillStyle = "#000";
       ctx.font = "bold 24px HakgyoansimNadeuriTTF-B";
       ctx.textAlign = "center";
-      ctx.fillText("Life 4 Cuts by JoonHee", frameWidth / 2, 40);
-      ctx.fillText(getCurrentDate(), frameWidth / 2, canvas.height - 20);
+      ctx.fillText("Life 4 Cuts by JoonHee", canvas.width / 2, 30);
+      ctx.fillText(getCurrentDate(), canvas.width / 2, canvas.height - 20);
     }
 
     function takePhoto() {
@@ -176,14 +190,17 @@
         return;
       }
 
-      const tempCanvas = document.createElement("canvas");
-      tempCanvas.width = frameWidth;
-      tempCanvas.height = frameHeight;
-      const tempCtx = tempCanvas.getContext("2d");
-      tempCtx.drawImage(video, 0, 0, frameWidth, frameHeight);
-      const image = tempCanvas;
+      const sx = 0;
+      const sy = 0;
+      const sWidth = video.videoWidth;
+      const sHeight = video.videoHeight;
+      const dx = 10;
+      const dy = 50 + photoIndex * frameHeight;
+      const dWidth = canvas.width - 20;
+      const dHeight = frameHeight - 10;
 
-      ctx.drawImage(image, 0, 50 + photoIndex * frameHeight, frameWidth, frameHeight - 20);
+      ctx.drawImage(video, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+
       photoIndex++;
     }
 
